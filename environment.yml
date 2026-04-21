@@ -1,0 +1,15 @@
+name: nyaya-langgraph
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - langgraph
+      - langchain
+      - langchain-core
+      - langchain-openrouter
+      - chromadb
+      - streamlit
+      - python-dotenv
+      - pydantic
