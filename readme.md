@@ -9,13 +9,13 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
 1. **`nyaya_agent/settings.py`**  
    Loads `.env` and exposes `CHROMA_READY`, paths for Chroma/SQLite, `CHAT_MODEL_ID`, `CHROMA_COLLECTION`, and `MAX_REACT_ITERATIONS` (default **6** for the Research tool loop).
 
-2. **`nyaya_agent/retrieval.py`**  
-   - **`Retriever`**: no-op search when Chroma is off.  
-   - **`ChromaRetriever`**: `chromadb.PersistentClient` + `collection.query(query_texts=…)`; maps hits to `RetrievedDoc`.  
+2. **`nyaya_agent/retrieval.py`**
+   - **`Retriever`**: no-op search when Chroma is off.
+   - **`ChromaRetriever`**: `chromadb.PersistentClient` + `collection.query(query_texts=…)`; maps hits to `RetrievedDoc`.
    - **`get_retriever()`**: returns **`ChromaRetriever`** only when `CHROMA_READY` is true; otherwise **`Retriever`**.
 
-3. **`nyaya_agent/memory/sqlite_store.py`**  
-   - Tables `sessions` (per-session **summary**) and `messages` (chronological rows).  
+3. **`nyaya_agent/memory/sqlite_store.py`**
+   - Tables `sessions` (per-session **summary**) and `messages` (chronological rows).
    - After each **user + assistant** pair, if total rows **> 6**, the oldest rows are **deleted** and their text is **merged** into `sessions.summary` (LLM compression when the API is available; otherwise concatenation with a length cap).
 
 4. **`nyaya_agent/agents/research.py`**  
@@ -24,9 +24,9 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
 5. **`nyaya_agent/nodes/plain_chat.py`**  
    When **`CHROMA_READY`** is false, the graph runs this node only: Gemini (or configured chat model) answers using **summary + recent six messages** from state, with an explicit system prompt that retrieval is off.
 
-6. **`nyaya_agent/graph.py`**  
-   - **Conditional edge from `START`**: `rag` if `CHROMA_READY` else `plain`.  
-   - **RAG path:** `research` → `compliance` → `synthesis` → `END`.  
+6. **`nyaya_agent/graph.py`**
+   - **Conditional edge from `START`**: `rag` if `CHROMA_READY` else `plain`.
+   - **RAG path:** `research` → `compliance` → `synthesis` → `END`.
    - **Plain path:** `plain_chat` → `END`.
 
 7. **`nyaya_agent/agents/synthesis.py`**  
@@ -48,16 +48,16 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
 
 ## 2. Dependencies (Python packages)
 
-| Package | Role |
-| :--- | :--- |
-| `langgraph` | State graph, `START` / `END`, conditional routing |
-| `langchain` | `init_chat_model`, orchestration helpers |
-| `langchain-core` | Messages, tools, tool calling |
-| `langchain-google-genai` | Gemini backend for default `CHAT_MODEL_ID` |
-| `chromadb` | Embedded vector store and default query embeddings |
-| `streamlit` | Web UI |
-| `python-dotenv` | Load `.env` |
-| `pydantic` | Typed validation where used |
+| Package                  | Role                                               |
+| :----------------------- | :------------------------------------------------- |
+| `langgraph`              | State graph, `START` / `END`, conditional routing  |
+| `langchain`              | `init_chat_model`, orchestration helpers           |
+| `langchain-core`         | Messages, tools, tool calling                      |
+| `langchain-google-genai` | Gemini backend for default `CHAT_MODEL_ID`         |
+| `chromadb`               | Embedded vector store and default query embeddings |
+| `streamlit`              | Web UI                                             |
+| `python-dotenv`          | Load `.env`                                        |
+| `pydantic`               | Typed validation where used                        |
 
 **stdlib:** `sqlite3` (no pip install).
 
@@ -67,7 +67,7 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
 
 ### Step A — Environment
 
-1. Install **Anaconda** or **Miniconda** (already assumed).  
+1. Install **Anaconda** or **Miniconda** (already assumed).
 2. From the project root `NyayaAgent`:
 
    ```powershell
@@ -82,12 +82,11 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
    ```
 
 3. Copy **`.env.example`** to **`.env`** and set at least:
-
    - **`GOOGLE_API_KEY`** — required for default Gemini chat/agents.
 
 ### Step B — Chroma off (plain chat only)
 
-1. In **`.env`**, set **`CHROMA_READY=false`** (default in example).  
+1. In **`.env`**, set **`CHROMA_READY=false`** (default in example).
 2. Run Streamlit:
 
    ```powershell
@@ -114,8 +113,8 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
 
    Or use the **“Seed demo Chroma documents”** button in the Streamlit sidebar.
 
-3. In **`.env`**, set **`CHROMA_READY=true`**.  
-4. **Restart** Streamlit (settings are read at import time).  
+3. In **`.env`**, set **`CHROMA_READY=true`**.
+4. **Restart** Streamlit (settings are read at import time).
 5. Open the app again; queries should hit **Research → Compliance → Synthesis** and show a JSON memo expander when retrieval runs.
 
 ### Step D — CLI smoke test
@@ -131,26 +130,26 @@ After the memo prints, you can enter optional terminal chat (`y` / `n`).
 
 The repo does **not** ship Indian Kanoon / SEBI / Gazette ingestion. You will need to:
 
-1. Implement ingestion jobs that **chunk** and **`upsert`** into Chroma with metadata keys matching `ChromaRetriever` (`source_type`, `title`, `citation`, `url`).  
-2. Tune **`CHROMA_COLLECTION`** / **`CHROMA_PERSIST_DIR`** if you use non-default paths.  
+1. Implement ingestion jobs that **chunk** and **`upsert`** into Chroma with metadata keys matching `ChromaRetriever` (`source_type`, `title`, `citation`, `url`).
+2. Tune **`CHROMA_COLLECTION`** / **`CHROMA_PERSIST_DIR`** if you use non-default paths.
 3. Re-run the app with **`CHROMA_READY=true`** after ingestion.
 
 ---
 
 ## 4. Operational notes
 
-- **Restart after changing `CHROMA_READY`** so `nyaya_agent.settings` reloads.  
-- **Demo seed text** is illustrative only, not legal authority.  
-- **Compliance agent** is still a deterministic scaffold; full clause engine is a later phase.  
+- **Restart after changing `CHROMA_READY`** so `nyaya_agent.settings` reloads.
+- **Demo seed text** is illustrative only, not legal authority.
+- **Compliance agent** is still a deterministic scaffold; full clause engine is a later phase.
 - **Research agent** is the only node with a multi-round **tool** loop capped at **`MAX_REACT_ITERATIONS`**; Compliance/Synthesis remain single-pass in code (extend similarly when you add tools there).
 
 ---
 
 ## 5. Troubleshooting
 
-| Symptom | Check |
-| :--- | :--- |
-| `ModuleNotFoundError: chromadb` | `pip install chromadb` inside the conda env |
-| Gemini errors | `GOOGLE_API_KEY` in `.env`; billing / model access for `CHAT_MODEL_ID` |
-| Empty retrieval | Collection empty → run seed or real ingestion; verify `CHROMA_READY=true` |
-| Streamlit import errors | Run from project root so `nyaya_agent` is importable |
+| Symptom                         | Check                                                                     |
+| :------------------------------ | :------------------------------------------------------------------------ |
+| `ModuleNotFoundError: chromadb` | `pip install chromadb` inside the conda env                               |
+| Gemini errors                   | `GOOGLE_API_KEY` in `.env`; billing / model access for `CHAT_MODEL_ID`    |
+| Empty retrieval                 | Collection empty → run seed or real ingestion; verify `CHROMA_READY=true` |
+| Streamlit import errors         | Run from project root so `nyaya_agent` is importable                      |
