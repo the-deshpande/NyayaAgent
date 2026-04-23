@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from langgraph.graph import END, START, StateGraph
 
 from agent_state import NyayaState
@@ -8,13 +10,18 @@ from nyaya_agent.nodes.plain_chat import plain_chat_node
 from nyaya_agent.retrieval import Retriever, get_retriever
 from nyaya_agent.settings import CHROMA_READY, MAX_REACT_ITERATIONS
 
+logger = logging.getLogger(__name__)
+
 
 def _entry_route(_: NyayaState) -> str:
-    return "rag" if CHROMA_READY else "plain"
+    route = "rag" if CHROMA_READY else "plain"
+    logger.info(f"Entry route evaluated to: {route}")
+    return route
 
 
 def build_graph(*, retriever: Retriever | None = None):
     """Three-agent RAG graph when `CHROMA_READY` is true; otherwise a single plain-chat node."""
+    logger.info("Building StateGraph")
 
     r = retriever if retriever is not None else get_retriever()
 
@@ -35,6 +42,7 @@ def build_graph(*, retriever: Retriever | None = None):
     g.add_edge("synthesis", END)
     g.add_edge("plain_chat", END)
 
+    logger.info("Compiling graph")
     return g.compile()
 
 

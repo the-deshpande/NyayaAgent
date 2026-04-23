@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from agent_state import NyayaState
 from nyaya_agent.llm import get_chat_model
+
+logger = logging.getLogger(__name__)
 
 
 def synthesis_agent(state: NyayaState) -> NyayaState:
@@ -17,6 +20,8 @@ def synthesis_agent(state: NyayaState) -> NyayaState:
     query = (state.get("query") or "").strip()
     retrieved = state.get("retrieved") or []
     findings = state.get("findings") or []
+
+    logger.info("Synthesis agent started. Generating structured memo.")
 
     memo = {
         "meta": {
@@ -45,6 +50,7 @@ def synthesis_agent(state: NyayaState) -> NyayaState:
     }
 
     assistant_message = _memo_to_assistant_blurb(memo)
+    logger.info("Synthesis agent finished memo generation.")
     return {"memo": memo, "assistant_message": assistant_message}
 
 
@@ -52,6 +58,7 @@ def _memo_to_assistant_blurb(memo: dict) -> str:
     """One short natural-language turn for chat UIs (optional LLM polish)."""
 
     try:
+        logger.info("Generating natural language assistant summary for memo")
         model = get_chat_model()
         sys = SystemMessage(
             content="Summarize the following legal memo JSON into 2-4 sentences for a chat user. No JSON."
@@ -60,8 +67,10 @@ def _memo_to_assistant_blurb(memo: dict) -> str:
         out = model.invoke([sys, human])
         t = (out.content or "").strip()
         if t:
+            logger.info("Successfully generated assistant blurb")
             return t
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to generate assistant blurb: {e}")
         pass
 
     rs = memo.get("risk_summary") or {}

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import logging
+
 from agent_state import ComplianceFinding, NyayaState
+
+logger = logging.getLogger(__name__)
 
 
 def compliance_agent(state: NyayaState) -> NyayaState:
@@ -15,9 +19,12 @@ def compliance_agent(state: NyayaState) -> NyayaState:
     query = (state.get("query") or "").strip()
     retrieved = state.get("retrieved") or []
 
+    logger.info(f"Compliance agent started. Analyzing {len(retrieved)} retrieved documents.")
+
     findings: list[ComplianceFinding] = []
 
     if not query:
+        logger.info("No query provided, returning empty findings.")
         return {"findings": findings}
 
     # Minimal, explainable baseline: if there are no retrieved sources, we flag uncertainty.
@@ -45,5 +52,6 @@ def compliance_agent(state: NyayaState) -> NyayaState:
         }
     )
 
+    logger.info(f"Compliance agent finished. Generated {len(findings)} finding(s).")
     return {"findings": findings}
 

@@ -13,14 +13,24 @@ from nyaya_agent.memory import ChatMemoryStore
 from nyaya_agent.seed_chroma import seed_demo_corpus
 from nyaya_agent.settings import CHROMA_COLLECTION, CHROMA_PERSIST_DIR, CHROMA_READY, SQLITE_PATH
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 
 def _session_id() -> str:
     if "nyaya_session_id" not in st.session_state:
-        st.session_state.nyaya_session_id = str(uuid.uuid4())
+        # st.session_state.nyaya_session_id = str(uuid.uuid4())
+        st.session_state.nyaya_session_id = 1
     return st.session_state.nyaya_session_id
 
 
 def main() -> None:
+    logger.info("Starting Nyaya Agent Streamlit App")
     st.set_page_config(page_title="Nyaya Agent", layout="wide")
     st.title("Nyaya Agent")
     st.caption("Case-focused chat · ChromaDB when enabled · SQLite memory (six messages + summary)")
@@ -39,7 +49,9 @@ def main() -> None:
 
     store = ChatMemoryStore(SQLITE_PATH)
     sid = _session_id()
+    logger.info(f"Using session ID: {sid}")
     ctx = store.get_context(sid)
+    logger.info(f"Loaded context for session {sid} with {len(ctx.messages)} messages")
 
     st.subheader("Chat")
     for m in ctx.messages:
@@ -51,6 +63,7 @@ def main() -> None:
 
     app = build_graph()
     if prompt := st.chat_input("Ask about a case or compliance topic…"):
+        logger.info(f"User entered prompt: {prompt}")
         with st.chat_message("user"):
             st.markdown(prompt)
 
@@ -67,11 +80,16 @@ def main() -> None:
             if not reply:
                 reply = json.dumps(out.get("memo") or {}, indent=2, ensure_ascii=False)[:8000]
             st.markdown(reply)
+            if (out.get("memo")): 
+                with open("memo.json", "w") as out_file:
+                    json.dump(out.get("memo"), out_file, indent=4)
             if CHROMA_READY and out.get("memo"):
                 with st.expander("Structured memo (JSON)"):
                     st.json(out["memo"])
 
+        logger.info("Appending exchange to memory store")
         store.append_exchange(sid, prompt, reply)
+        logger.info("Triggering app rerun")
         st.rerun()
 
 

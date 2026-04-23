@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
+
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from agent_state import NyayaState
 from nyaya_agent.llm import get_chat_model
 
+logger = logging.getLogger(__name__)
 
 def plain_chat_node(state: NyayaState) -> NyayaState:
     """General chat when ChromaDB is not ready (`CHROMA_READY=false`)."""
@@ -12,6 +15,8 @@ def plain_chat_node(state: NyayaState) -> NyayaState:
     query = (state.get("query") or "").strip()
     summary = (state.get("conversation_summary") or "").strip()
     recent = state.get("recent_messages") or []
+
+    logger.info(f"Plain chat node started. Query: {query}")
 
     blocks: list[str] = []
     if summary:
@@ -35,10 +40,13 @@ def plain_chat_node(state: NyayaState) -> NyayaState:
     )
 
     try:
+        logger.info("Invoking model for plain chat")
         model = get_chat_model()
         out = model.invoke([sys, human])
         text = (out.content or "").strip()
+        logger.info("Successfully generated plain chat response")
     except Exception as e:
+        logger.error(f"Plain chat model failed: {e}")
         text = (
             "The chat model could not complete this request (network, quota, or credentials). "
             f"Details: {e!s}"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
@@ -11,6 +12,7 @@ from nyaya_agent.llm import get_chat_model
 from nyaya_agent.retrieval import Retriever
 from nyaya_agent.settings import MAX_REACT_ITERATIONS
 
+logger = logging.getLogger(__name__)
 
 def _tool_args(tc: dict[str, Any]) -> dict[str, Any]:
     raw = tc.get("args") or tc.get("arguments") or {}
@@ -36,7 +38,10 @@ def research_agent(
     r = retriever or Retriever()
     cap = max_iterations if max_iterations is not None else MAX_REACT_ITERATIONS
 
+    logger.info(f"Research agent started. Query: {query}")
+
     if not query:
+        logger.info("No query provided, returning empty retrieved docs.")
         return {"retrieved": []}
 
     @tool
@@ -56,7 +61,9 @@ def research_agent(
     merged: dict[str, RetrievedDoc] = {}
 
     def run_search(q: str) -> str:
+        logger.info(f"Executing search with query: {q}")
         docs = r.search(q)
+        logger.info(f"Retrieved {len(docs)} documents.")
         for doc in docs:
             merged[doc["id"]] = doc
         if not docs:
@@ -78,9 +85,11 @@ def research_agent(
     ]
 
     for _ in range(cap):
+        logger.info(f"Research agent iteration {_ + 1}/{cap}")
         ai: AIMessage = model.invoke(msgs)
         msgs.append(ai)
         if not ai.tool_calls:
+            logger.info("No more tool calls from model, breaking loop.")
             break
         for tc in ai.tool_calls:
             name = tc.get("name")
@@ -93,4 +102,6 @@ def research_agent(
                 obs = f"Unknown tool: {name}"
             msgs.append(ToolMessage(content=obs, tool_call_id=tid))
 
-    return {"retrieved": list(merged.values()) if merged else r.search(query)}
+    result = list(merged.values()) if merged else r.search(query)
+    logger.info(f"Research agent finished. Returning {len(result)} retrieved documents.")
+    return {"retrieved": result}
