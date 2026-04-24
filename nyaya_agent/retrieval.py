@@ -28,16 +28,21 @@ class Retriever:
 
 
 class ChromaRetriever(Retriever):
-    """Query ChromaDB persistent store; uses Chroma default embedding for `query_texts`."""
+    """Query ChromaDB persistent store; uses InLegalBERT embedding for `query_embeddings`."""
 
     def __init__(self, *, persist_dir: Path, collection: str, top_k: int = 8):
         super().__init__(RetrieverConfig(collection=collection, top_k=top_k))
         import chromadb
+        from sentence_transformers import SentenceTransformer
 
         self._persist_dir = Path(persist_dir)
         self._persist_dir.mkdir(parents=True, exist_ok=True)
         self._client = chromadb.PersistentClient(path=str(self._persist_dir))
-        self._collection = self._client.get_or_create_collection(name=collection)
+        self._collection = self._client.get_or_create_collection(
+            name=collection,
+            metadata={"hnsw:space": "cosine"}
+        )
+        self._embedding_model = SentenceTransformer("law-ai/InLegalBERT")
 
     def search(self, query: str) -> list[RetrievedDoc]:
         q = query.strip()
@@ -47,8 +52,10 @@ class ChromaRetriever(Retriever):
             n = self._collection.count()
             if n == 0:
                 return []
+            
+            q_vec = self._embedding_model.encode([q], normalize_embeddings=True)[0].tolist()
             res = self._collection.query(
-                query_texts=[q],
+                query_embeddings=[q_vec],
                 n_results=min(self.config.top_k, max(1, n)),
             )
         except Exception:
@@ -61,16 +68,23 @@ class ChromaRetriever(Retriever):
         for i, doc_id in enumerate(ids):
             text = docs[i] if i < len(docs) else ""
             meta = metas[i] if i < len(metas) and isinstance(metas[i], dict) else {}
-            st = meta.get("source_type", "unknown")
-            if st not in ("case_law", "circular", "legislation", "unknown"):
-                st = "unknown"
+            
+            # Map Kanoon notebook schema to app schema
+            st = "case_law"  # Defaulting all fetched Kanoon judgments to case_law
+            tid = str(meta.get("tid", ""))
+            court = str(meta.get("court", "Kanoon"))
+            year = str(meta.get("year", ""))
+            
+            citation = f"{court} {year} ({tid})" if tid else f"{court} {year}".strip()
+            url = f"https://indiankanoon.org/doc/{tid}/" if tid else None
+
             out.append(
                 {
                     "id": str(doc_id),
                     "source_type": st,  # type: ignore[arg-type]
                     "title": str(meta.get("title", "")),
-                    "citation": str(meta.get("citation", "")),
-                    "url": meta.get("url"),
+                    "citation": citation,
+                    "url": url,
                     "text": text or "",
                 }
             )

@@ -6,3 +6,5 @@ chromadb
 streamlit
 python-dotenv
 pydantic
+sentence-transformers
+torchvision

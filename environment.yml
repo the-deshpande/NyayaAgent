@@ -13,3 +13,5 @@ dependencies:
       - streamlit
       - python-dotenv
       - pydantic
+      - sentence-transformers
+      - torchvision
