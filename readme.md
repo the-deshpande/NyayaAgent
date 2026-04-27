@@ -29,6 +29,8 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
    - **RAG path:** `research` → `compliance` → `synthesis` → `END`.
    - **Plain path:** `plain_chat` → `END`.
 
+   ![Agenting Flow Diagram](diagram.svg)
+
 7. **`nyaya_agent/agents/synthesis.py`**  
    Builds the JSON **memo** and sets **`assistant_message`** (short chat blurb via the same chat model when the API works; otherwise a deterministic fallback).
 

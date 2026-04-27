@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,48 +24,50 @@ class ChatMemoryStore:
         self._init_db()
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=10.0, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         return conn
 
     def _init_db(self) -> None:
-        with self._connect() as c:
-            c.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sessions (
-                    session_id TEXT PRIMARY KEY,
-                    summary TEXT NOT NULL DEFAULT '',
-                    updated_at TEXT NOT NULL
+        with contextlib.closing(self._connect()) as c:
+            with c:
+                c.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS sessions (
+                        session_id TEXT PRIMARY KEY,
+                        summary TEXT NOT NULL DEFAULT '',
+                        updated_at TEXT NOT NULL
+                    )
+                    """
                 )
-                """
-            )
-            c.execute(
-                """
-                CREATE TABLE IF NOT EXISTS messages (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    session_id TEXT NOT NULL,
-                    role TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+                c.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS messages (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        session_id TEXT NOT NULL,
+                        role TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+                    )
+                    """
                 )
-                """
-            )
-            c.execute(
-                "CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, id)"
-            )
+                c.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, id)"
+                )
 
     def ensure_session(self, session_id: str) -> None:
         now = datetime.now(timezone.utc).isoformat()
-        with self._connect() as c:
-            c.execute(
-                "INSERT OR IGNORE INTO sessions (session_id, summary, updated_at) VALUES (?, '', ?)",
-                (session_id, now),
-            )
+        with contextlib.closing(self._connect()) as c:
+            with c:
+                c.execute(
+                    "INSERT OR IGNORE INTO sessions (session_id, summary, updated_at) VALUES (?, '', ?)",
+                    (session_id, now),
+                )
 
     def get_context(self, session_id: str) -> ChatContext:
         self.ensure_session(session_id)
-        with self._connect() as c:
+        with contextlib.closing(self._connect()) as c:
             row = c.execute(
                 "SELECT summary FROM sessions WHERE session_id = ?", (session_id,)
             ).fetchone()
@@ -85,46 +88,55 @@ class ChatMemoryStore:
 
         self.ensure_session(session_id)
         now = datetime.now(timezone.utc).isoformat()
-        with self._connect() as c:
-            c.execute(
-                "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, 'user', ?, ?)",
-                (session_id, user_text, now),
-            )
-            c.execute(
-                "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, 'assistant', ?, ?)",
-                (session_id, assistant_text, now),
-            )
-            rows = c.execute(
-                "SELECT id, role, content FROM messages WHERE session_id = ? ORDER BY id ASC",
-                (session_id,),
-            ).fetchall()
-
-            if len(rows) <= 6:
+        
+        needs_roll = False
+        evicted = []
+        evicted_text = ""
+        existing_summary = ""
+        
+        with contextlib.closing(self._connect()) as c:
+            with c:
                 c.execute(
-                    "UPDATE sessions SET updated_at = ? WHERE session_id = ?",
-                    (now, session_id),
+                    "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, 'user', ?, ?)",
+                    (session_id, user_text, now),
                 )
-                return
+                c.execute(
+                    "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, 'assistant', ?, ?)",
+                    (session_id, assistant_text, now),
+                )
+                rows = c.execute(
+                    "SELECT id, role, content FROM messages WHERE session_id = ? ORDER BY id ASC",
+                    (session_id,),
+                ).fetchall()
 
-            # Evict oldest messages until six remain; merge evicted text into summary.
-            evict_count = len(rows) - 6
-            evicted = rows[:evict_count]
+                if len(rows) <= 6:
+                    c.execute(
+                        "UPDATE sessions SET updated_at = ? WHERE session_id = ?",
+                        (now, session_id),
+                    )
+                else:
+                    needs_roll = True
+                    evict_count = len(rows) - 6
+                    evicted = rows[:evict_count]
 
-            evicted_text = "\n".join(f"{r['role']}: {r['content']}" for r in evicted)
-            summary_row = c.execute(
-                "SELECT summary FROM sessions WHERE session_id = ?", (session_id,)
-            ).fetchone()
-            existing_summary = (summary_row["summary"] if summary_row else "") or ""
+                    evicted_text = "\n".join(f"{r['role']}: {r['content']}" for r in evicted)
+                    summary_row = c.execute(
+                        "SELECT summary FROM sessions WHERE session_id = ?", (session_id,)
+                    ).fetchone()
+                    existing_summary = (summary_row["summary"] if summary_row else "") or ""
 
+        if needs_roll:
             new_summary = _roll_summary(existing_summary, evicted_text)
 
-            for r in evicted:
-                c.execute("DELETE FROM messages WHERE id = ?", (r["id"],))
+            with contextlib.closing(self._connect()) as c:
+                with c:
+                    for r in evicted:
+                        c.execute("DELETE FROM messages WHERE id = ?", (r["id"],))
 
-            c.execute(
-                "UPDATE sessions SET summary = ?, updated_at = ? WHERE session_id = ?",
-                (new_summary, now, session_id),
-            )
+                    c.execute(
+                        "UPDATE sessions SET summary = ?, updated_at = ? WHERE session_id = ?",
+                        (new_summary, now, session_id),
+                    )
 
 
 def _roll_summary(existing: str, evicted_block: str) -> str:
