@@ -25,4 +25,3 @@ dependencies:
       - langchain-community
       - markdown
       - xhtml2pdf
-      - extra-streamlit-components
