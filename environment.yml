@@ -15,3 +15,11 @@ dependencies:
       - pydantic
       - sentence-transformers
       - torchvision
+      - requests
+      - beautifulsoup4
+      - langdetect
+      - spacy
+      - tqdm
+      - transformers
+      - accelerate
+      - langchain-community
