@@ -8,6 +8,7 @@ from io import BytesIO
 
 import markdown
 from xhtml2pdf import pisa
+import extra_streamlit_components as stx
 
 warnings.filterwarnings("ignore")
 
@@ -38,11 +39,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-def _session_id() -> str:
-    if "nyaya_session_id" not in st.session_state:
-        # st.session_state.nyaya_session_id = str(uuid.uuid4())
-        st.session_state.nyaya_session_id = 1
-    return st.session_state.nyaya_session_id
+
 
 def generate_pdf_from_memo(memo: dict) -> bytes:
     md_content = memo.get("detailed_report", "")
@@ -87,8 +84,24 @@ def main() -> None:
     st.title("Nyaya Agent")
     st.caption("Case-focused chat · ChromaDB when enabled · SQLite memory (six messages + summary)")
 
+    cookie_manager = stx.CookieManager(key="cookie_manager")
+    
+    if "nyaya_session_id" not in st.session_state:
+        # Native Streamlit 1.30+ synchronous cookie reading
+        stored_session_id = st.context.cookies.get("nyaya_session_id")
+            
+        if not stored_session_id:
+            sid = str(uuid.uuid4())
+            logger.info(f"New session ID generated: {sid}")
+            cookie_manager.set("nyaya_session_id", sid, key="set_nyaya_session_id")
+            st.session_state["nyaya_session_id"] = sid
+        else:
+            logger.info(f"Loaded session ID from browser cookies: {stored_session_id}")
+            st.session_state["nyaya_session_id"] = stored_session_id
+            
+    sid = str(st.session_state["nyaya_session_id"])
+
     store = ChatMemoryStore(SQLITE_PATH)
-    sid = _session_id()
     logger.info(f"Using session ID: {sid}")
     ctx = store.get_context(sid)
     logger.info(f"Loaded context for session {sid} with {len(ctx.messages)} messages")
