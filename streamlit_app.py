@@ -4,6 +4,10 @@ import json
 import threading
 import uuid
 import warnings
+from io import BytesIO
+
+import markdown
+from xhtml2pdf import pisa
 
 warnings.filterwarnings("ignore")
 
@@ -39,6 +43,42 @@ def _session_id() -> str:
         # st.session_state.nyaya_session_id = str(uuid.uuid4())
         st.session_state.nyaya_session_id = 1
     return st.session_state.nyaya_session_id
+
+def generate_pdf_from_memo(memo: dict) -> bytes:
+    md_content = memo.get("detailed_report", "")
+    if not md_content:
+        md_content = f"# Nyaya Agent Memo\n\n**Query:** {memo.get('query')}\n\n**Summary:**\n{memo.get('summary', 'No summary available.')}\n\n*Detailed report is missing.*"
+        
+    html_content = markdown.markdown(md_content)
+    
+    full_html = f"""
+    <html>
+    <head>
+        <style>
+            @page {{ size: a4 portrait; margin: 2cm; }}
+            body {{ font-family: Helvetica, Arial, sans-serif; font-size: 12pt; line-height: 1.5; color: #333; }}
+            h1 {{ color: #2C3E50; border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 24pt; }}
+            h2 {{ color: #34495E; margin-top: 20px; font-size: 18pt; }}
+            h3 {{ color: #7F8C8D; font-size: 14pt; }}
+            p {{ margin-bottom: 10px; }}
+            ul {{ margin-bottom: 15px; }}
+            li {{ margin-bottom: 5px; }}
+        </style>
+    </head>
+    <body>
+        {html_content}
+    </body>
+    </html>
+    """
+    
+    pdf_buffer = BytesIO()
+    pisa_status = pisa.CreatePDF(src=full_html, dest=pdf_buffer)
+    
+    if pisa_status.err:
+        logger.error("Failed to generate PDF")
+        return b""
+        
+    return pdf_buffer.getvalue()
 
 
 def main() -> None:
@@ -79,18 +119,24 @@ def main() -> None:
 
         if st.session_state.show_memo and latest_memo:
             def log_download():
-                logger.info("User initiated download of the structured memo JSON")
+                logger.info("User initiated download of the structured memo PDF")
 
-            st.download_button(
-                label="📥 Download JSON",
-                data=json.dumps(latest_memo, indent=4),
-                file_name="memo.json",
-                mime="application/json",
-                on_click=log_download,
-                use_container_width=True
-            )
+            pdf_bytes = generate_pdf_from_memo(latest_memo)
+
+            if pdf_bytes:
+                st.download_button(
+                    label="📥 Download PDF Memo",
+                    data=pdf_bytes,
+                    file_name="nyaya_memo.pdf",
+                    mime="application/pdf",
+                    on_click=log_download,
+                    use_container_width=True
+                )
+            else:
+                st.error("Failed to generate PDF.")
+                
             with st.expander("Memo Contents", expanded=True):
-                st.json(latest_memo)
+                st.markdown(latest_memo.get("detailed_report", "No detailed report available."))
 
         st.divider()
         st.subheader("Context Summary")
