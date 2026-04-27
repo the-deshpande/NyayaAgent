@@ -91,6 +91,8 @@ def research_agent(
         if not ai.tool_calls:
             logger.info("No more tool calls from model, breaking loop.")
             break
+        
+        logger.info(f"Agent initiated {len(ai.tool_calls)} tool call(s) in this iteration.")
         for tc in ai.tool_calls:
             name = tc.get("name")
             tid = tc.get("id") or ""
@@ -99,6 +101,7 @@ def research_agent(
                 sq = (args.get("search_query") or args.get("query") or query).strip()
                 obs = run_search(sq)
             else:
+                logger.warning(f"Model requested unknown tool: {name}")
                 obs = f"Unknown tool: {name}"
             msgs.append(ToolMessage(content=obs, tool_call_id=tid))
 
