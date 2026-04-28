@@ -79,10 +79,8 @@ def generate_pdf_from_memo(memo: dict) -> bytes:
 
 
 def set_browser_cookie(name: str, value: str):
-    components.html(
-        f"<script>window.parent.document.cookie = '{name}={value}; path=/; max-age=31536000';</script>",
-        height=0,
-        width=0,
+    st.html(
+        f"<script>window.parent.document.cookie = '{name}={value}; path=/; max-age=31536000';</script>"
     )
 
 @st.cache_resource
