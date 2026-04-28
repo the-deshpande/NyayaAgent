@@ -79,21 +79,19 @@ def generate_pdf_from_memo(memo: dict) -> bytes:
 def _get_session_id() -> str:
     """Read session ID from the URL on every run. URL is the single source of truth.
 
-    If no ?sid= in the URL (first-time visitor), generate one, inject it into the
-    browser URL bar via history.replaceState, and halt with st.stop() so the next
-    automatic rerun picks it up from the URL cleanly.
+    If no ?sid= in the URL (first-time visitor), generate one and write it
+    via st.query_params. This triggers a rerun, but that's fine — we no longer
+    depend on session_state for sid or chat context.
     """
     url_sid = st.query_params.get("sid")
     if url_sid:
         return url_sid
 
-    # First visit — generate sid, push to URL, and stop this run.
+    # First visit — generate sid and persist to URL.
     new_sid = str(uuid.uuid4())
     logger.info(f"New session ID generated: {new_sid}")
-    st.html(
-        f'<script>window.history.replaceState(null, "", "?sid={new_sid}");'
-        f'window.parent.location.href = window.parent.location.href;</script>'
-    )
+    st.query_params["sid"] = new_sid
+    return new_sid
 
 
 @st.cache_resource
