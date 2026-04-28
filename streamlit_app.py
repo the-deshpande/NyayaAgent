@@ -78,32 +78,25 @@ def generate_pdf_from_memo(memo: dict) -> bytes:
 
 
 def _resolve_session_id() -> str:
-    """Resolve session ID from URL query params, falling back to a new UUID.
+    """Resolve session ID: session_state (fast) -> query_params (refresh-safe) -> new UUID.
 
-    Uses st.query_params to persist the session ID in the URL itself,
-    which survives full page refreshes on Streamlit Community Cloud
-    (unlike cookies, which fail due to iframe cross-origin restrictions).
+    Any write to st.query_params triggers a Streamlit rerun, so we only
+    write once: when generating a brand-new session for a first-time visitor.
     """
-    params = st.query_params
-    url_sid = params.get("sid")
+    # 1. Fast path — already resolved during this WebSocket connection (no rerun)
+    if "nyaya_session_id" in st.session_state:
+        return st.session_state["nyaya_session_id"]
 
+    # 2. Page was refreshed — recover session ID from URL (read-only, no rerun)
+    url_sid = st.query_params.get("sid")
     if url_sid:
-        # Returning user — reuse the ID from the URL.
-        if st.session_state.get("nyaya_session_id") != url_sid:
-            logger.info(f"Restored session ID from URL: {url_sid}")
-            st.session_state["nyaya_session_id"] = url_sid
-            # Force context reload on session change
-            st.session_state.pop("chat_ctx", None)
+        logger.info(f"Recovered session from URL: {url_sid}")
+        st.session_state["nyaya_session_id"] = url_sid
         return url_sid
 
-    # Check if we already have one in session state (within same WS connection)
-    if "nyaya_session_id" in st.session_state:
-        existing = st.session_state["nyaya_session_id"]
-        # Ensure URL stays in sync (no-op if already set)
-        st.query_params["sid"] = existing
-        return existing
-
-    # Brand-new visitor — generate & persist
+    # 3. Brand-new visitor — generate, persist to both stores.
+    #    The query_params write triggers exactly one rerun; the next run
+    #    will hit path 1 (session_state) and return instantly.
     new_sid = str(uuid.uuid4())
     logger.info(f"New session ID generated: {new_sid}")
     st.session_state["nyaya_session_id"] = new_sid
