@@ -94,7 +94,7 @@ def _get_session_id() -> str:
         f'<script>window.history.replaceState(null, "", "?sid={new_sid}");'
         f'window.parent.location.href = window.parent.location.href;</script>'
     )
-    st.stop()
+    st.rerun()
 
 
 @st.cache_resource
