@@ -8,7 +8,6 @@ from io import BytesIO
 
 import markdown
 from xhtml2pdf import pisa
-import streamlit.components.v1 as components
 
 warnings.filterwarnings("ignore")
 
@@ -78,10 +77,39 @@ def generate_pdf_from_memo(memo: dict) -> bytes:
     return pdf_buffer.getvalue()
 
 
-def set_browser_cookie(name: str, value: str):
-    st.html(
-        f"<script>window.parent.document.cookie = '{name}={value}; path=/; max-age=31536000';</script>"
-    )
+def _resolve_session_id() -> str:
+    """Resolve session ID from URL query params, falling back to a new UUID.
+
+    Uses st.query_params to persist the session ID in the URL itself,
+    which survives full page refreshes on Streamlit Community Cloud
+    (unlike cookies, which fail due to iframe cross-origin restrictions).
+    """
+    params = st.query_params
+    url_sid = params.get("sid")
+
+    if url_sid:
+        # Returning user — reuse the ID from the URL.
+        if st.session_state.get("nyaya_session_id") != url_sid:
+            logger.info(f"Restored session ID from URL: {url_sid}")
+            st.session_state["nyaya_session_id"] = url_sid
+            # Force context reload on session change
+            st.session_state.pop("chat_ctx", None)
+        return url_sid
+
+    # Check if we already have one in session state (within same WS connection)
+    if "nyaya_session_id" in st.session_state:
+        existing = st.session_state["nyaya_session_id"]
+        # Ensure URL stays in sync (no-op if already set)
+        st.query_params["sid"] = existing
+        return existing
+
+    # Brand-new visitor — generate & persist
+    new_sid = str(uuid.uuid4())
+    logger.info(f"New session ID generated: {new_sid}")
+    st.session_state["nyaya_session_id"] = new_sid
+    st.query_params["sid"] = new_sid
+    return new_sid
+
 
 @st.cache_resource
 def get_memory_store():
@@ -96,32 +124,14 @@ def main() -> None:
     st.title("Nyaya Agent")
     st.caption("Case-focused chat · ChromaDB when enabled · SQLite memory (six messages + summary)")
 
-    if "nyaya_session_id" not in st.session_state:
-        # Native Streamlit 1.30+ synchronous cookie reading
-        stored_session_id = st.context.cookies.get("nyaya_session_id")
-            
-        if not stored_session_id:
-            sid = str(uuid.uuid4())
-            logger.info(f"New session ID generated: {sid}")
-            st.session_state["nyaya_session_id"] = sid
-            st.session_state["needs_cookie_sync"] = True
-        else:
-            logger.info(f"Loaded session ID from browser cookies: {stored_session_id}")
-            st.session_state["nyaya_session_id"] = stored_session_id
-            
-    sid = str(st.session_state["nyaya_session_id"])
-    
-    if st.session_state.get("needs_cookie_sync"):
-        set_browser_cookie("nyaya_session_id", sid)
-        st.session_state["needs_cookie_sync"] = False
+    sid = _resolve_session_id()
 
     store = get_memory_store()
     
-    if "chat_ctx" not in st.session_state or st.session_state.get("chat_ctx_sid") != sid:
+    if "chat_ctx" not in st.session_state:
         logger.info(f"Fetching DB context for session ID: {sid}")
         ctx = store.get_context(sid)
         st.session_state["chat_ctx"] = ctx
-        st.session_state["chat_ctx_sid"] = sid
         logger.info(f"Loaded context for session {sid} with {len(ctx.messages)} messages")
     else:
         ctx = st.session_state["chat_ctx"]
