@@ -78,30 +78,42 @@ def generate_pdf_from_memo(memo: dict) -> bytes:
 
 
 def _resolve_session_id() -> str:
-    """Resolve session ID: session_state (fast) -> query_params (refresh-safe) -> new UUID.
+    """Resolve session ID: session_state -> URL query params -> new UUID.
 
-    Any write to st.query_params triggers a Streamlit rerun, so we only
-    write once: when generating a brand-new session for a first-time visitor.
+    IMPORTANT: We never write to st.query_params because on Streamlit Cloud
+    that triggers a page-level navigation that wipes session_state.
+    Instead, we use history.replaceState (via st.html) to silently update
+    the URL bar for cross-refresh persistence.
     """
-    # 1. Fast path — already resolved during this WebSocket connection (no rerun)
+    # 1. Fast path — already resolved during this WebSocket connection
     if "nyaya_session_id" in st.session_state:
         return st.session_state["nyaya_session_id"]
 
-    # 2. Page was refreshed — recover session ID from URL (read-only, no rerun)
+    # 2. Page was refreshed — recover session ID from URL (read-only)
     url_sid = st.query_params.get("sid")
     if url_sid:
         logger.info(f"Recovered session from URL: {url_sid}")
         st.session_state["nyaya_session_id"] = url_sid
         return url_sid
 
-    # 3. Brand-new visitor — generate, persist to both stores.
-    #    The query_params write triggers exactly one rerun; the next run
-    #    will hit path 1 (session_state) and return instantly.
+    # 3. Brand-new visitor
     new_sid = str(uuid.uuid4())
     logger.info(f"New session ID generated: {new_sid}")
     st.session_state["nyaya_session_id"] = new_sid
-    st.query_params["sid"] = new_sid
     return new_sid
+
+
+def _sync_sid_to_url(sid: str) -> None:
+    """Push the session ID into the browser URL bar without triggering a rerun.
+
+    Uses history.replaceState which modifies the URL in-place — no navigation,
+    no WebSocket reconnection, no session_state wipe.
+    """
+    if not st.session_state.get("_sid_url_synced"):
+        st.html(
+            f'<script>window.history.replaceState(null, "", "?sid={sid}")</script>'
+        )
+        st.session_state["_sid_url_synced"] = True
 
 
 @st.cache_resource
@@ -118,6 +130,7 @@ def main() -> None:
     st.caption("Case-focused chat · ChromaDB when enabled · SQLite memory (six messages + summary)")
 
     sid = _resolve_session_id()
+    _sync_sid_to_url(sid)
 
     store = get_memory_store()
     
