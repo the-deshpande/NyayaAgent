@@ -25,3 +25,6 @@ dependencies:
       - langchain-community
       - markdown
       - xhtml2pdf
+      - ragas
+      - datasets
+      - langchain-huggingface

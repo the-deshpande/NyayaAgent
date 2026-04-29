@@ -34,8 +34,8 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
 7. **`nyaya_agent/agents/synthesis.py`**  
    Builds the JSON **memo** and sets **`assistant_message`** (short chat blurb via the same chat model when the API works; otherwise a deterministic fallback).
 
-8. **`nyaya_agent/seed_chroma.py`**  
-   Optional **demo** chunks (illustrative text, not legal advice) to verify Chroma wiring: `python -m nyaya_agent.seed_chroma`.
+8. **`nyaya_agent/evaluate_rag.py`**  
+   Script to evaluate RAG pipeline retrieval using `ragas`.
 
 9. **`streamlit_app.py`**  
    Streamlit UI: sidebar status, optional demo seed button, chat with **SQLite** session id, invokes **`build_graph()`** with **`conversation_summary`** and **`recent_messages`**, then **`append_exchange`**.
@@ -106,14 +106,9 @@ This guide matches the implementation in the repository: **ChromaDB** for corpus
    mkdir data -ErrorAction SilentlyContinue
    ```
 
-2. **Seed demo chunks** (optional smoke test):
+2. **Evaluate Retrieval** (optional smoke test):
 
-   ```powershell
-   conda activate nyaya-langgraph
-   python -m nyaya_agent.seed_chroma
-   ```
-
-   Or use the **“Seed demo Chroma documents”** button in the Streamlit sidebar.
+   You can use the **“Evaluate RAG Pipeline”** button in the Streamlit sidebar to test the retrieval quality with `ragas`.
 
 3. In **`.env`**, set **`CHROMA_READY=true`**.
 4. **Restart** Streamlit (settings are read at import time).

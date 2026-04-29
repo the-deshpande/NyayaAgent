@@ -17,7 +17,7 @@ load_dotenv()
 
 from nyaya_agent.graph import build_graph
 from nyaya_agent.memory import ChatMemoryStore
-from nyaya_agent.seed_chroma import seed_demo_corpus
+from nyaya_agent.evaluate_rag import evaluate_retrieval
 from nyaya_agent.settings import CHROMA_COLLECTION, CHROMA_PERSIST_DIR, CHROMA_READY, SQLITE_PATH, setup_environment
 
 setup_environment()
@@ -120,9 +120,16 @@ def main() -> None:
         st.write(f"**SQLite:** `{SQLITE_PATH}`")
         if not CHROMA_READY:
             st.info("Retrieval is off. Set `CHROMA_READY=true` in `.env` after ingesting data.")
-        if st.button("Seed demo Chroma documents (illustrative only)"):
-            n = seed_demo_corpus()
-            st.success(f"Upserted {n} demo chunks. Set `CHROMA_READY=true` and restart the app to query them.")
+        if st.button("Evaluate RAG Pipeline"):
+            with st.spinner("Evaluating RAG pipeline... This may take a minute."):
+                try:
+                    rating = evaluate_retrieval()
+                    full_stars = int(rating)
+                    half = (rating - full_stars) >= 0.5
+                    stars = "★" * full_stars + ("½" if half else "") + "☆" * (5 - full_stars - (1 if half else 0))
+                    st.success(f"RAG Quality: {stars}  **{rating} / 5**")
+                except Exception as e:
+                    st.error(f"Evaluation failed: {e}")
 
         st.divider()
         st.subheader("Memo Actions")
