@@ -73,8 +73,17 @@ def evaluate_retrieval() -> dict:
 
             round_scores = []
             for i in range(num_questions):
-                row_score = df.iloc[i][score_cols].mean() if score_cols else 0.0
-                round_scores.append(row_score)
+                row = df.iloc[i]
+                prec = 0.0
+                rec = 0.0
+                for c in score_cols:
+                    if 'precision' in c.lower():
+                        prec = row[c]
+                    elif 'recall' in c.lower():
+                        rec = row[c]
+                
+                f1 = 2 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0.0
+                round_scores.append(f1)
             return round_scores
 
         # Run all rounds in parallel
@@ -112,19 +121,41 @@ def evaluate_retrieval() -> dict:
         )
         result_dict = dict(result)
         logger.info(f"RAG Evaluation results (legacy API): {result_dict}")
-        avg = sum(v for v in result_dict.values() if isinstance(v, (int, float))) / max(1, sum(1 for v in result_dict.values() if isinstance(v, (int, float))))
-        return round(avg * 5, 2)
+        
+        prec = 0.0
+        rec = 0.0
+        for k, v in result_dict.items():
+            if 'precision' in k.lower():
+                prec = v
+            elif 'recall' in k.lower():
+                rec = v
+                
+        f1 = 2 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0.0
+        return round(f1 * 5, 2)
     except Exception as e:
         logger.error(f"Error in RAG evaluation: {e}")
         raise
 
 
 def _compute_rating(df) -> float:
-    """Convert ragas scores (0-1) into a single rating out of 5."""
+    """Convert ragas scores (0-1) into a single rating out of 5 using mean F1 score."""
     score_cols = [c for c in df.columns if c not in ("user_input", "reference", "response", "retrieved_contexts")]
     if not score_cols:
         return 0.0
-    avg = df[score_cols].mean().mean()  # average across all metrics and questions
+        
+    f1_scores = []
+    for _, row in df.iterrows():
+        prec = 0.0
+        rec = 0.0
+        for c in score_cols:
+            if 'precision' in c.lower():
+                prec = row[c]
+            elif 'recall' in c.lower():
+                rec = row[c]
+        f1 = 2 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0.0
+        f1_scores.append(f1)
+        
+    avg = sum(f1_scores) / len(f1_scores) if f1_scores else 0.0
     return round(avg * 5, 2)
 
 
