@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyaya Agent | Indian Legal Assistant</title>
+    <link rel="stylesheet" href="style.css?v=8">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <!-- Onboarding Overlay -->
+    <div id="onboarding-overlay" class="onboarding-container glass">
+        <div class="onboarding-card">
+            <div class="judicial-emblem">
+                <i data-lucide="scale"></i>
+            </div>
+            <h2 class="playfair">Welcome to Nyaya</h2>
+            <p class="onboarding-sub">सत्यमेव जयते</p>
+            <p class="instruction">To provide the most accurate legal assistance, please select your profile:</p>
+            
+            <div class="persona-grid">
+                <button class="persona-btn" data-persona="lawyer">
+                    <i data-lucide="briefcase"></i>
+                    <span>Lawyer / Judge</span>
+                    <small>High Technicality & Procedural Analysis</small>
+                </button>
+                <button class="persona-btn" data-persona="student">
+                    <i data-lucide="graduation-cap"></i>
+                    <span>Law Student</span>
+                    <small>Landmark Cases & Legal Theory</small>
+                </button>
+                <button class="persona-btn" data-persona="citizen">
+                    <i data-lucide="user"></i>
+                    <span>Citizen</span>
+                    <small>Simple Language & RTI Support</small>
+                </button>
+                <button class="persona-btn" data-persona="explorer">
+                    <i data-lucide="compass"></i>
+                    <span>Explorer</span>
+                    <small>History & System Overview</small>
+                </button>
+            </div>
+
+            <div class="onboarding-footer">
+                <p>⚠️ <strong>Legal Disclaimer:</strong> Nyaya Agent is an AI assistant and may occasionally provide inaccurate information. This tool is for research and drafting assistance only and is NOT a substitute for professional legal advice.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container blur-background">
+        <!-- Sidebar -->
+        <aside class="sidebar glass">
+            <div class="logo-section">
+                <div class="legal-tech-logo">
+                    <i data-lucide="scale" class="gold-icon scales"></i>
+                    <i data-lucide="pen-tool" class="gold-icon pen"></i>
+                </div>
+                <h1 class="playfair">Nyaya</h1>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item new-chat-btn" id="new-session-btn"><i data-lucide="edit"></i> New chat</button>
+                <div class="sidebar-section recents-section">
+                    <h3 class="section-title" id="recents-toggle" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                        Recents <i data-lucide="chevron-down" id="recents-chevron" style="width: 14px; height: 14px; transition: transform 0.2s;"></i>
+                    </h3>
+                    <ul id="recent-sessions-list" class="recent-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+                <hr style="border: 0; height: 1px; background: rgba(255, 255, 255, 0.1); margin: 0.5rem 0;">
+                <button class="nav-item active" data-tool="chat"><i data-lucide="message-square"></i> Legal Chat</button>
+                <button class="nav-item switch-profile" id="switch-btn"><i data-lucide="user-cog"></i> Switch Profile</button>
+            </nav>
+            
+            <div class="sidebar-section rag-evaluation" style="padding: 0 1.5rem; margin-top: 1.5rem;">
+                <button id="eval-rag-btn" class="secondary-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--text-color); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">Evaluate RAG Pipeline</button>
+            </div>
+            
+            <div class="sidebar-section memo-actions" id="memo-actions-section" style="display: none; padding: 0 1.5rem; margin-top: 1.5rem;">
+                <hr style="border: 0; height: 1px; background: rgba(255, 255, 255, 0.1); margin-bottom: 1rem;">
+                <h3 class="section-title" style="font-size: 0.9rem; color: var(--gold-color); margin-bottom: 0.5rem;">Memo Actions</h3>
+                <button id="view-memo-btn" class="secondary-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--text-color); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;"><i data-lucide="file-text" style="width: 16px; height: 16px;"></i> View Latest Memo</button>
+            </div>
+
+            <div class="sidebar-section context-summary" id="context-summary-section" style="padding: 0 1.5rem; margin-top: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
+                <hr style="border: 0; height: 1px; background: rgba(255, 255, 255, 0.1); margin-bottom: 1rem;">
+                <h3 class="section-title" style="font-size: 0.9rem; color: var(--gold-color); margin-bottom: 0.5rem;">Context Summary</h3>
+                <div class="summary-box" id="context-summary-text" style="background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.8rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); overflow-y: auto; flex-grow: 1; max-height: 150px;">
+                    <p class="empty-state">Start chatting to build legal context...</p>
+                </div>
+            </div>
+            <div class="motto-section">
+                <div id="motto-container">
+                    <p class="motto" id="motto-text">सत्यमेव जयते</p>
+                    <span class="motto-en" id="motto-lang">HINDI</span>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <p>⚠️ AI Research Assistant. Always verify legal drafts.</p>
+                <div class="footer-icons">
+                    <i data-lucide="shield-check"></i>
+                    <i data-lucide="landmark"></i>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar glass">
+                <div class="status-indicator">
+                    <span class="dot online"></span>
+                    <span>Judicial Network Online</span>
+                </div>
+                
+                <nav class="top-nav-menu">
+                    <button class="nav-item top-nav-btn" data-tool="search"><i data-lucide="search"></i> Case Search</button>
+                    <button class="nav-item top-nav-btn" data-tool="notice"><i data-lucide="file-text"></i> Draft Notice</button>
+                    <button class="nav-item top-nav-btn" data-tool="rti"><i data-lucide="scroll"></i> RTI Portal</button>
+                    <button class="nav-item top-nav-btn" data-tool="compliance"><i data-lucide="shield-check"></i> Compliance Audit</button>
+                    <button class="nav-item top-nav-btn" data-tool="bridge"><i data-lucide="git-branch"></i> Law Bridge</button>
+                </nav>
+
+                <div class="user-profile">
+                    <i data-lucide="user" class="profile-icon"></i>
+                    <span id="profile-status">Professional Dashboard</span>
+                    <div class="info-trigger" id="info-trigger">
+                        <i data-lucide="info"></i>
+                        <div class="persona-tooltip glass" id="persona-tooltip">
+                            Select a profile to see capabilities.
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="chat-wrapper">
+                <div id="chat-messages" class="chat-container">
+                </div>
+                
+                <div class="input-area glass">
+                    <input type="file" id="file-upload" style="display: none;" accept=".pdf,.txt">
+                    <button id="attach-btn" class="icon-btn" title="Attach Document">
+                        <i data-lucide="paperclip"></i>
+                    </button>
+                    <input type="text" id="user-input" placeholder="Enter your legal query here..." autocomplete="off">
+                    <button id="send-btn" class="gold-btn">
+                        <i data-lucide="gavel"></i>
+                        <span>Execute</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js?v=10"></script>
+    <script>
+        // Initialize icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

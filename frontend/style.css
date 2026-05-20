@@ -1,0 +1,917 @@
+:root {
+    --advocate-black: #0d0d0d;
+    --sidebar-black: #141414;
+    --judicial-gold: #c5a059;
+    --gold-glow: rgba(197, 160, 89, 0.2);
+    --courtroom-maroon: #4a0e0e;
+    --parchment: #f5f5dc;
+    --glass: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+
+    /* Persona Themes */
+    --theme-lawyer: #c5a059;
+    --theme-student: #4ade80;
+    --theme-citizen: #38bdf8;
+    --theme-explorer: #a855f7;
+    
+    --accent-color: var(--theme-lawyer);
+}
+
+/* Dynamic Theme Application */
+:root[data-theme="lawyer"] { --accent-color: var(--theme-lawyer); --judicial-gold: var(--theme-lawyer); }
+:root[data-theme="student"] { --accent-color: var(--theme-student); --judicial-gold: var(--theme-student); }
+:root[data-theme="citizen"] { --accent-color: var(--theme-citizen); --judicial-gold: var(--theme-citizen); }
+:root[data-theme="explorer"] { --accent-color: var(--theme-explorer); --judicial-gold: var(--theme-explorer); }
+
+/* Smart Citation Highlighting */
+.legal-citation {
+    color: var(--judicial-gold);
+    font-weight: 600;
+    text-decoration: underline dotted;
+    cursor: help;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.legal-citation:hover {
+    background: var(--judicial-gold);
+    color: var(--advocate-black);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--advocate-black);
+    color: var(--parchment);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    height: 100%;
+}
+
+/* Glassmorphism Utility */
+.glass {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+}
+
+/* Sidebar */
+.sidebar {
+    width: 280px;
+    height: 100%;
+    background: var(--sidebar-black);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--glass-border);
+    overflow-y: auto;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 3rem;
+}
+
+.legal-tech-logo {
+    position: relative;
+    width: 45px;
+    height: 45px;
+}
+
+.legal-tech-logo .scales {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    animation: balance 4s infinite ease-in-out;
+}
+
+.legal-tech-logo .pen {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+    animation: write-glow 3s infinite ease-in-out;
+}
+
+@keyframes balance {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+@keyframes write-glow {
+    0%, 100% { filter: drop-shadow(0 0 2px var(--judicial-gold)); opacity: 0.6; }
+    50% { filter: drop-shadow(0 0 10px var(--judicial-gold)); opacity: 1; }
+}
+
+.playfair {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--judicial-gold);
+    letter-spacing: 1px;
+    background: linear-gradient(
+        to right, 
+        var(--judicial-gold) 20%, 
+        #fff 40%, 
+        var(--judicial-gold) 60%
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 5s linear infinite;
+}
+
+@keyframes shine {
+    to { background-position: 200% center; }
+}
+
+.gold-icon {
+    color: var(--judicial-gold);
+    width: 32px;
+    height: 32px;
+    filter: drop-shadow(0 0 5px var(--gold-glow));
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-grow: 1;
+}
+
+.nav-item {
+    background: transparent;
+    border: none;
+    color: rgba(245, 245, 220, 0.6);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.nav-item i {
+    width: 18px;
+}
+
+.nav-item:hover, .nav-item.active {
+    background: var(--glass);
+    color: var(--judicial-gold);
+    border-left: 3px solid var(--judicial-gold);
+}
+
+.new-chat-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 0.8rem 1rem;
+    justify-content: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.new-chat-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-left: none;
+}
+
+.recents-section {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-title {
+    font-size: 0.75rem;
+    color: rgba(245, 245, 220, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.recent-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.recent-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.recent-item {
+    font-size: 0.85rem;
+    color: rgba(245, 245, 220, 0.7);
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.recent-item i {
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.recent-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--judicial-gold);
+}
+
+.motto-section {
+    margin-top: auto;
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.motto {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--judicial-gold);
+    transition: opacity 0.5s ease-in-out;
+}
+
+.motto.fade-out {
+    opacity: 0;
+}
+
+.motto-en {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.5;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.motto-en.fade-out {
+    opacity: 0;
+}
+
+/* Main Content */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Ensures child flex containers can scroll */
+    background: radial-gradient(circle at top right, #1a0a0a, var(--advocate-black));
+}
+
+.top-bar {
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.top-nav-menu {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    margin: 0 2rem;
+    flex-wrap: wrap;
+}
+
+.top-nav-btn {
+    background: transparent;
+    border: none;
+    color: rgba(245, 245, 220, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.top-nav-btn i {
+    width: 16px;
+}
+
+.top-nav-btn:hover, .top-nav-btn.active {
+    background: var(--glass);
+    color: var(--judicial-gold);
+    border-left: none !important;
+    border-bottom: 2px solid var(--judicial-gold);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.dot.online {
+    background-color: #4caf50;
+    box-shadow: 0 0 10px #4caf50;
+}
+
+.chat-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 0; /* Crucial for flex scroll */
+}
+
+.chat-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+    padding-right: 1rem; /* Space for scrollbar */
+}
+
+.message {
+    padding: 1.5rem;
+    border-radius: 12px;
+    max-width: 85%;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.system {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 4px solid var(--judicial-gold);
+    border-top-left-radius: 0;
+}
+
+.message.user {
+    align-self: flex-end;
+    background: var(--judicial-gold);
+    color: var(--advocate-black);
+    font-weight: 600;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 8px 25px var(--gold-glow);
+}
+
+.message.user::before {
+    content: '⚖️ QUERY';
+    position: absolute;
+    top: -22px;
+    right: 0;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    color: var(--judicial-gold);
+    opacity: 0.8;
+}
+
+.message.system::before {
+    content: '🏛️ RESPONSE';
+    position: absolute;
+    top: -22px;
+    left: 0;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    color: var(--judicial-gold);
+    opacity: 0.8;
+}
+
+/* Markdown Styling */
+.message h1, .message h2, .message h3 {
+    color: var(--judicial-gold);
+    margin: 1.5rem 0 1rem 0;
+    font-family: 'Playfair Display', serif;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+    padding-bottom: 0.5rem;
+}
+
+.message ul, .message ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.message p {
+    margin-bottom: 0.8rem;
+}
+
+/* Action Buttons */
+.action-area {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.action-btn {
+    background: rgba(197, 160, 89, 0.1);
+    border: 1px solid var(--judicial-gold);
+    color: var(--judicial-gold);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: var(--judicial-gold);
+    color: var(--advocate-black);
+}
+
+#chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px 100px 20px; /* Large bottom padding for loader space */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    scroll-behavior: smooth;
+}
+
+.chat-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.input-area {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 15px;
+    margin: 10px 20px 20px 20px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    z-index: 10;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--judicial-gold);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+#user-input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: var(--parchment);
+    font-size: 1rem;
+    outline: none;
+}
+
+.gold-btn {
+    background: var(--judicial-gold);
+    color: var(--advocate-black);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gold-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--gold-glow);
+}
+
+/* Legal Loader Animations */
+.legal-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    position: relative;
+}
+
+.legal-loader::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: var(--judicial-gold);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: ripple 2s infinite;
+    z-index: -1;
+    opacity: 0;
+}
+
+@keyframes ripple {
+    0% { width: 0; height: 0; opacity: 0.5; }
+    100% { width: 200px; height: 200px; opacity: 0; }
+}
+
+.gavel-animate {
+    font-size: 2.5rem;
+    color: var(--judicial-gold);
+    animation: strike 1.2s infinite ease-in-out;
+    display: inline-block;
+}
+
+.loader-text {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--judicial-gold);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes strike {
+    0% { transform: rotate(0deg); }
+    30% { transform: rotate(-45deg); }
+    50% { transform: rotate(10deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* Weighing the Evidence Animation */
+.lockdown-active .scales {
+    animation: weighing 2s infinite ease-in-out;
+}
+
+@keyframes weighing {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+/* Onboarding Enhancements */
+.judicial-emblem {
+    margin-bottom: 1rem;
+    opacity: 0.15;
+    transform: scale(3);
+    color: var(--judicial-gold);
+}
+
+.onboarding-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    opacity: 0.7;
+    text-align: justify;
+}
+
+.onboarding-footer strong {
+    color: var(--judicial-gold);
+}
+
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--glass-border);
+    margin-top: auto;
+    font-size: 0.7rem;
+    color: var(--judicial-gold);
+    opacity: 0.8;
+    text-align: center;
+}
+
+.footer-icons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.footer-icons i {
+    width: 14px;
+    height: 14px;
+}
+
+.message {
+    padding: 1.2rem 1.8rem;
+    border-radius: 20px;
+    line-height: 1.8;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    animation: fadeIn 0.4s ease;
+    word-wrap: break-word;
+}
+
+.message.user {
+    align-self: flex-end;
+    background: rgba(197, 160, 89, 0.9); /* Gold Bubble */
+    color: #0d0d0d;
+    font-weight: 500;
+    max-width: 70%;
+    border-bottom-right-radius: 4px;
+}
+
+.message.system {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.05); /* Glass Parchment */
+    color: var(--parchment);
+    max-width: 85%;
+    border: 1px solid var(--glass-border);
+    border-bottom-left-radius: 4px;
+}
+
+.system-spark {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
+.message-content {
+    flex: 1;
+}
+
+.message-content p {
+    margin-bottom: 0.8rem;
+}
+
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Onboarding Overlay */
+.onboarding-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(10, 10, 10, 0.98);
+    backdrop-filter: blur(25px);
+    transition: opacity 0.5s ease;
+}
+
+.onboarding-container.hidden {
+    display: none !important;
+}
+
+.onboarding-card {
+    background: #141414;
+    padding: 3rem;
+    border-radius: 24px;
+    border: 1px solid var(--judicial-gold);
+    text-align: center;
+    max-width: 650px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 10000; /* Higher than container */
+    pointer-events: auto !important;
+}
+
+.onboarding-sub {
+    color: var(--judicial-gold);
+    font-size: 1.5rem;
+    margin: 1rem 0;
+    font-family: 'Playfair Display', serif;
+}
+
+.instruction {
+    opacity: 0.7;
+    margin-bottom: 2rem;
+}
+
+.persona-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.persona-btn {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    color: var(--parchment);
+    padding: 1.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.persona-btn i {
+    width: 24px;
+    height: 24px;
+    color: var(--judicial-gold);
+}
+
+.persona-btn:hover {
+    background: var(--gold-glow);
+    border-color: var(--judicial-gold);
+    transform: translateY(-5px);
+}
+
+.persona-btn small {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-top: 0.3rem;
+}
+
+.switch-profile {
+    margin-top: 2rem;
+    border-top: 1px solid var(--glass-border) !important;
+    border-radius: 0 !important;
+}
+
+.blur-background {
+    filter: blur(10px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--judicial-gold);
+}
+
+/* Persona Info Icon & Tooltip */
+.info-trigger {
+    margin-left: 10px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    color: var(--judicial-gold);
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.info-trigger:hover {
+    opacity: 1;
+}
+
+.persona-tooltip {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    width: 250px;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--parchment);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    border: 1px solid rgba(197, 160, 89, 0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    background: rgba(13, 13, 13, 0.95);
+    backdrop-filter: blur(20px);
+}
+
+.info-trigger:hover .persona-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.persona-tooltip strong {
+    color: var(--judicial-gold);
+    display: block;
+    margin-bottom: 5px;
+    font-family: 'Playfair Display', serif;
+}
+
+/* Judicial Lockdown State */
+.lockdown-active {
+    pointer-events: none;
+    cursor: not-allowed !important;
+}
+
+.lockdown-active aside, 
+.lockdown-active .top-bar, 
+.lockdown-active .input-area {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+    transition: all 0.3s ease;
+}
+
+.lockdown-active .input-area {
+    border-color: rgba(255, 0, 0, 0.2);
+}
+
+.lockdown-active #user-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.message-time {
+    position: absolute;
+    bottom: 5px;
+    right: 12px;
+    font-size: 0.6rem;
+    opacity: 0.5;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+}
+
+.message.user .message-time {
+    color: var(--advocate-black);
+    opacity: 0.7;
+}

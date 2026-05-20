@@ -1,0 +1,14 @@
+# Environment
+.env
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Data / local DB / chroma vectors
+data/
+*.sqlite3
+
+# Misc
+.DS_Store
+*.zip

@@ -1,0 +1,41 @@
+# Merged Dependencies for Nyaya Agent (FastAPI + LangGraph)
+
+# Core Web
+fastapi
+uvicorn
+python-multipart
+pydantic
+pydantic-settings
+
+# LLM & Orchestration
+google-genai
+langchain
+langchain-core
+langchain-community
+langgraph
+langchain-openrouter
+langchain-google-genai
+
+# RAG & Retrieval
+chromadb
+sentence-transformers
+transformers
+accelerate
+
+# Document Processing
+pypdf
+markdown
+xhtml2pdf
+beautifulsoup4
+langdetect
+spacy
+
+# Utilities
+python-dotenv
+requests
+tqdm
+
+# Optional Evaluation (ragas)
+ragas
+datasets
+langchain-huggingface
