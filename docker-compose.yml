@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  nyaya-agent:
+    build: .
+    ports:
+      - "8000:7860"
+    volumes:
+      - .:/app
+    environment:
+      - PORT=7860
+      - CHROMA_READY=true
+    env_file:
+      - .env
