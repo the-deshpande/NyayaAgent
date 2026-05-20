@@ -81,6 +81,140 @@ Nyaya Agent combines a **Retrieval-Augmented Generation (RAG)** pipeline with **
     └───────────────┘    └─────────────────┘
 ```
 
+### Enhanced Component Diagram
+
+```mermaid
+graph TB
+    User["👤 User/Browser"]
+    Frontend["📱 Frontend Layer<br/>HTML/CSS/JS"]
+    FastAPI["🔌 FastAPI Server<br/>REST API Endpoints"]
+    LangGraph["🤖 LangGraph Orchestrator<br/>State Machine"]
+    
+    PlainChat["💬 Plain Chat Node"]
+    Research["🔍 Research Agent"]
+    Compliance["⚖️ Compliance Agent"]
+    Synthesis["✍️ Synthesis Agent"]
+    
+    ChromaDB["📚 ChromaDB Vector DB<br/>InLegalBERT Embeddings"]
+    SQLite["💾 SQLite Memory<br/>Sessions & Summaries"]
+    LLM["🧠 Google Gemini LLM"]
+    
+    User -->|HTTP| Frontend
+    Frontend -->|REST API| FastAPI
+    FastAPI -->|Route & Manage State| LangGraph
+    
+    LangGraph -->|Node Selection| PlainChat
+    LangGraph -->|Agent Selection| Research
+    LangGraph -->|Agent Selection| Compliance
+    LangGraph -->|Agent Selection| Synthesis
+    
+    PlainChat -->|Query| ChromaDB
+    Research -->|Retrieve Context| ChromaDB
+    Compliance -->|Retrieve Context| ChromaDB
+    
+    PlainChat -->|LLM Call| LLM
+    Research -->|LLM Call| LLM
+    Compliance -->|LLM Call| LLM
+    Synthesis -->|Synthesize Response| LLM
+    
+    Synthesis -->|Store Session| SQLite
+    PlainChat -->|Save History| SQLite
+    
+    LLM -->|Response Text| FastAPI
+    FastAPI -->|JSON Response| Frontend
+    Frontend -->|Render UI| User
+```
+
+### Data Flow Diagram
+
+```mermaid
+graph LR
+    User["👤 User Message"]
+    Frontend["📱 Frontend<br/>Capture"]
+    API["🔌 API<br/>Route"]
+    StateManager["📊 State<br/>Manager"]
+    AgentSelector["🤖 Agent<br/>Selector"]
+    
+    Query["🔍 Query<br/>Processor"]
+    RAG["📚 RAG<br/>Retrieval"]
+    LLM["🧠 LLM<br/>Generation"]
+    Memory["💾 Memory<br/>Store"]
+    
+    Response["💬 Response"]
+    Frontend2["📱 UI<br/>Render"]
+    Display["👀 Display"]
+    
+    User -->|input| Frontend
+    Frontend -->|POST| API
+    API -->|context| StateManager
+    StateManager -->|user_data| AgentSelector
+    AgentSelector -->|execute| Query
+    
+    Query -->|search| RAG
+    RAG -->|docs| LLM
+    StateManager -->|history| LLM
+    
+    LLM -->|text| Response
+    Response -->|save| Memory
+    Response -->|JSON| Frontend2
+    Frontend2 -->|markdown| Display
+```
+
+### Agent Decision Tree
+
+```mermaid
+graph TD
+    Input["📨 User Input<br/>Received"]
+    
+    MessageType{"Message<br/>Type?"}
+    
+    ChatFlow["💬 Chat Query"]
+    UploadFlow["📤 Upload Doc"]
+    GenerateFlow["📄 Generate Doc"]
+    EvaluateFlow["🔬 Evaluate RAG"]
+    
+    Complexity{"Query<br/>Complexity?"}
+    
+    SimpleChat["Simple Question<br/>→ Plain Chat"]
+    ComplexChat["Complex Research<br/>→ Research Agent"]
+    
+    DocTask{"Doc Task<br/>Type?"}
+    
+    AuditTask["Compliance Audit<br/>→ Compliance Agent"]
+    DraftTask["Notice/RTI Draft<br/>→ Synthesis Agent"]
+    
+    ProcessingPhase["🔄 Processing"]
+    LLMGenerate["🧠 LLM Generate"]
+    MemoryStore["💾 Store Session"]
+    ReturnResponse["✅ Return to User"]
+    
+    Input --> MessageType
+    
+    MessageType -->|Chat| ChatFlow
+    MessageType -->|Upload| UploadFlow
+    MessageType -->|Generate| GenerateFlow
+    MessageType -->|Evaluate| EvaluateFlow
+    
+    ChatFlow --> Complexity
+    Complexity -->|Simple| SimpleChat
+    Complexity -->|Complex| ComplexChat
+    
+    GenerateFlow --> DocTask
+    DocTask -->|Audit| AuditTask
+    DocTask -->|Draft| DraftTask
+    
+    SimpleChat --> ProcessingPhase
+    ComplexChat --> ProcessingPhase
+    AuditTask --> ProcessingPhase
+    DraftTask --> ProcessingPhase
+    UploadFlow --> MemoryStore
+    EvaluateFlow --> ReturnResponse
+    
+    ProcessingPhase --> LLMGenerate
+    LLMGenerate --> MemoryStore
+    MemoryStore --> ReturnResponse
+```
+
 ---
 
 ## ✨ Key Features
