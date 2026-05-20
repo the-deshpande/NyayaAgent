@@ -418,7 +418,7 @@ async function handleSendMessage() {
             
             // If the backend generated a memo, we can offer an explicit download button
             if (data.memo) {
-                const memoText = data.memo.detailed_report || JSON.stringify(data.memo, null, 2);
+                const memoText = data.memo.detailed_report || data.memo.summary || data.memo.reply || JSON.stringify(data.memo, null, 2);
                 latestMemoText = memoText;
                 const memoSection = document.getElementById('memo-actions-section');
                 if (memoSection) memoSection.style.display = 'block';
