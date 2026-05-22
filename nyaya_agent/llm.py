@@ -4,12 +4,12 @@ from functools import lru_cache
 
 from langchain_openrouter import ChatOpenRouter
 
-from nyaya_agent.settings import CHAT_MODEL_ID
+from nyaya_agent.settings import CHAT_MODEL_ID, EVAL_MODEL_ID
 
 
 @lru_cache(maxsize=1)
-def get_chat_model():
+def get_chat_model(eval=False):
     # Use model from openrouter with 0 temperature
-    model = ChatOpenRouter(model=CHAT_MODEL_ID, temperature=0)
+    model = ChatOpenRouter(model=EVAL_MODEL_ID if eval else CHAT_MODEL_ID, temperature=0)
     return model
     

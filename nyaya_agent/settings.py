@@ -28,6 +28,7 @@ SQLITE_PATH: Path = Path(os.getenv("SQLITE_PATH", str(PROJECT_ROOT / "data" / "n
 
 # Primary chat / agent model (Gemma-4-31b-it when using openrouter).
 CHAT_MODEL_ID: str = os.getenv("CHAT_MODEL_ID", "google/gemma-4-31b-it:free")
+EVAL_MODEL_ID: str = os.getenv("EVAL_MODEL_ID", "google/gemma-4-31b-it:free")
 
 # Chroma collection name for legal corpus.
 CHROMA_COLLECTION: str = os.getenv("CHROMA_COLLECTION", "nyaya_kanoon")

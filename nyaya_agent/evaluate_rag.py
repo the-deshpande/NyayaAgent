@@ -19,17 +19,17 @@ def evaluate_retrieval() -> dict:
     questions = [
         "What is insider trading and what are the penalties for it in India?",
         "What are the rights and obligations of landlords and tenants in a rental dispute?",
-        "What are the grounds for divorce and how is alimony determined in India?",
+        "What are hindu marriage act and special marriage act?",
     ]
     ground_truth = [
         "Insider trading refers to dealing in securities while in possession of unpublished price sensitive information. Under the SEBI Act, penalties include disgorgement of profits, monetary fines, and debarment from the securities market. Courts have held that mere possession of such information at the time of trading is sufficient to establish a violation.",
         "Tenants have the right to peaceful possession, essential services, and protection from arbitrary eviction under rent control legislation. Landlords are entitled to fair rent, timely payment, and may seek eviction on grounds such as non-payment of rent, subletting without consent, or bona fide personal need. Disputes are adjudicated by rent controllers or civil courts depending on the jurisdiction.",
-        "Under the Hindu Marriage Act and the Special Marriage Act, divorce may be granted on grounds including cruelty, desertion, adultery, and irretrievable breakdown of marriage. Alimony is determined by courts based on factors such as the income and assets of both spouses, the standard of living during the marriage, the duration of the marriage, and the needs of dependent children.",
+        "The Hindu Marriage Act and the Special Marriage Act are two distinct legal frameworks that establish legal guidelines for establishing and dissolving marriages. While one focuses on traditional customs and specific cultural rituals for those within certain communities, the other provides a civil alternative that accommodates diverse backgrounds without requiring religious ceremonies. Both acts outline rights, obligations, and procedures regarding matrimony, but they apply differently based on the choices and backgrounds of the individuals involved.",
     ]
 
     retriever = get_retriever()
 
-    llm = get_chat_model()
+    llm = get_chat_model(eval=True)
     ragas_llm = LangchainLLMWrapper(llm)
 
     embeddings = HuggingFaceEmbeddings(model_name="law-ai/InLegalBERT")
@@ -42,7 +42,7 @@ def evaluate_retrieval() -> dict:
         from ragas import SingleTurnSample
         from ragas.metrics import ContextPrecision, ContextRecall
         from ragas import EvaluationDataset
-        from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
         def _run_round(round_idx: int) -> list[float]:
             """Run a single evaluation round and return per-question scores."""
@@ -86,14 +86,12 @@ def evaluate_retrieval() -> dict:
                 round_scores.append(f1)
             return round_scores
 
-        # Run all rounds in parallel
+        # Run all rounds sequentially
         best_scores = [0.0] * num_questions
-        with ThreadPoolExecutor(max_workers=NUM_ROUNDS) as executor:
-            futures = {executor.submit(_run_round, r): r for r in range(NUM_ROUNDS)}
-            for future in as_completed(futures):
-                round_scores = future.result()
-                for i in range(num_questions):
-                    best_scores[i] = max(best_scores[i], round_scores[i])
+        for r in range(NUM_ROUNDS):
+            round_scores = _run_round(r)
+            for i in range(num_questions):
+                best_scores[i] = max(best_scores[i], round_scores[i])
 
         overall = sum(best_scores) / num_questions if num_questions else 0.0
         rating = round(overall * 5, 2)
